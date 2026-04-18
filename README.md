@@ -220,27 +220,6 @@ Opacity formula: `0.15 + (density / 100) × 0.65` — faint at low crowd, vivid 
 
 ---
 
-## 🎬 3-Minute Demo Script
-
-> Use this flow for the hackathon demo.
-
-**Step 1 — Open the attendee view (`/`)**
-Point to the live SVG heatmap — zones pulse green, amber, or red based on live density. Highlight the WebSocket "LIVE" indicator in the top bar.
-
-**Step 2 — Hit HALF_TIME**
-Click the **HALF_TIME** button in the Admin Dashboard (or call `POST /events/trigger`). Watch Concession and Restroom zones flood red within one broadcast cycle (~5 s). The NudgePanel auto-refreshes its AI nudges.
-
-**Step 3 — Attendee chat**
-Type *"Where's the shortest food queue?"* in the CrowdChat widget. The LLM reads the live crowd state and responds with a specific, data-grounded recommendation. The referenced zone lights up purple on the map.
-
-**Step 4 — Admin Dashboard (`/admin`)**
-Switch to the admin view. Show the per-zone table: density bar, trend arrow, wait time, and the one-line LLM staff action for every row. Hit **Refresh Actions** to re-generate.
-
-**Step 5 — Close with the pitch**
-> *"Venues lose revenue to poor crowd flow. CrowdSense reasons about it, communicates in plain language, and acts before the problem peaks."*
-
----
-
 ## Environment Variables
 
 | Variable | Where | Description |
