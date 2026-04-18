@@ -260,8 +260,3 @@ Switch to the admin view. Show the per-zone table: density bar, trend arrow, wai
 | Hosting | Railway (backend) · Vercel (frontend) |
 | Container | Docker (`python:3.11-slim`) |
 
----
-
-## License
-
-MIT — built for the Google AI Hackathon. Go win. 🏆
