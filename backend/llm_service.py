@@ -9,33 +9,33 @@ import os
 from typing import Any
 
 import httpx
+from dotenv import load_dotenv
 
-ANTHROPIC_API_KEY: str = os.environ.get("ANTHROPIC_API_KEY", "")
-ANTHROPIC_MODEL:   str = "claude-sonnet-4-20250514"
-ANTHROPIC_URL:     str = "https://api.anthropic.com/v1/messages"
+load_dotenv()
+
+GOOGLE_API_KEY: str = os.environ.get("GOOGLE_API_KEY", "")
+GEMINI_MODEL:   str = "gemini-2.5-flash"
+GEMINI_URL:     str = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GOOGLE_API_KEY}"
 
 # ---------------------------------------------------------------------------
 # Internal helper
 # ---------------------------------------------------------------------------
 
-async def _call_claude(system: str, user: str, max_tokens: int = 512) -> str:
-    """Send a single-turn message to Claude and return the text response."""
+async def _call_gemini(system: str, user: str, max_tokens: int = 512) -> str:
+    """Send a single-turn message to Gemini and return the text response."""
     headers = {
-        "x-api-key":         ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "content-type":      "application/json",
+        "content-type": "application/json",
     }
     payload = {
-        "model":      ANTHROPIC_MODEL,
-        "max_tokens": max_tokens,
-        "system":     system,
-        "messages":   [{"role": "user", "content": user}],
+        "systemInstruction": {"parts": [{"text": system}]},
+        "contents": [{"role": "user", "parts": [{"text": user}]}],
+        "generationConfig": {"maxOutputTokens": max_tokens},
     }
     async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.post(ANTHROPIC_URL, headers=headers, json=payload)
+        resp = await client.post(GEMINI_URL, headers=headers, json=payload)
         resp.raise_for_status()
         data = resp.json()
-        return data["content"][0]["text"]
+        return data["candidates"][0]["content"]["parts"][0]["text"]
 
 
 # ---------------------------------------------------------------------------
@@ -90,7 +90,7 @@ async def generate_nudges(crowd_state: dict) -> list[dict]:
             f"Current event: {crowd_state.get('event', 'UNKNOWN')}.\n"
             f"Zone data:\n{json.dumps(zones_summary, indent=2)}"
         )
-        raw = await _call_claude(NUDGE_SYSTEM_PROMPT, user_msg, max_tokens=600)
+        raw = await _call_gemini(NUDGE_SYSTEM_PROMPT, user_msg, max_tokens=600)
 
         # Strip markdown fences if model adds them despite instructions
         raw = raw.strip()
@@ -128,8 +128,7 @@ CHAT_SYSTEM_TEMPLATE = (
 )
 
 _CHAT_FALLBACK = (
-    "I'm having trouble accessing live data right now. "
-    "Please check the stadium map for real-time zone information."
+    "Please refer to the live stadium map for the most current wait times and zone densities."
 )
 
 
@@ -165,28 +164,32 @@ async def chat_with_context(
 
         # Build messages list: history + new user message
         messages: list[dict] = []
-        for turn in history[-10:]:  # keep last 10 turns to stay within token limits
-            role = turn.get("role", "user")
-            if role in ("user", "assistant"):
-                messages.append({"role": role, "content": turn["content"]})
-        messages.append({"role": "user", "content": message})
+        for turn in history[-10:]:  # keep last 10 turns
+            raw_role = turn.get("role", "user")
+            # map assistant -> model for Gemini
+            role = "model" if raw_role == "assistant" else "user"
+            messages.append({
+                "role": role,
+                "parts": [{"text": turn["content"]}]
+            })
+        messages.append({
+            "role": "user", 
+            "parts": [{"text": message}]
+        })
 
         headers = {
-            "x-api-key":         ANTHROPIC_API_KEY,
-            "anthropic-version": "2023-06-01",
-            "content-type":      "application/json",
+            "content-type": "application/json",
         }
         payload: dict[str, Any] = {
-            "model":      ANTHROPIC_MODEL,
-            "max_tokens": 350,
-            "system":     system,
-            "messages":   messages,
+            "systemInstruction": {"parts": [{"text": system}]},
+            "contents": messages,
+            "generationConfig": {"maxOutputTokens": 350},
         }
         async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(ANTHROPIC_URL, headers=headers, json=payload)
+            resp = await client.post(GEMINI_URL, headers=headers, json=payload)
             resp.raise_for_status()
             data = resp.json()
-            return data["content"][0]["text"]
+            return data["candidates"][0]["content"]["parts"][0]["text"]
 
     except Exception as exc:  # noqa: BLE001
         print(f"[llm_service] chat_with_context error: {exc}")
@@ -224,7 +227,7 @@ async def get_staff_action(zone: dict) -> str:
             }
         )
         system = STAFF_ACTION_SYSTEM.format(zone_json=zone_json)
-        raw = await _call_claude(system, "Provide the staff action now.", max_tokens=60)
+        raw = await _call_gemini(system, "Provide the staff action now.", max_tokens=60)
         return raw.strip()
     except Exception as exc:  # noqa: BLE001
         print(f"[llm_service] get_staff_action error: {exc}")
