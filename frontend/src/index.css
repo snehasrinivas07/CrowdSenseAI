@@ -3,35 +3,35 @@
    Design system: dark glassmorphism, vibrant accents, smooth animations
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
 /* ── Design tokens ── */
 :root {
-  --color-bg:           #080c14;
-  --color-surface:      #0f1728;
-  --color-surface-2:    #162035;
-  --color-border:       #1e2d4a;
-  --color-border-light: #253555;
-  --color-text:         #e8edf5;
-  --color-text-muted:   #64748b;
-  --color-text-dim:     #3d5070;
+  --color-bg:           #09090b;
+  --color-surface:      #131316;
+  --color-surface-2:    #1c1c21;
+  --color-border:       #27272a;
+  --color-border-light: #3f3f46;
+  --color-text:         #f4f4f5;
+  --color-text-muted:   #a1a1aa;
+  --color-text-dim:     #52525b;
 
-  --color-green:  #1D9E75;
-  --color-amber:  #EF9F27;
-  --color-red:    #E24B4A;
-  --color-blue:   #3b82f6;
-  --color-purple: #a78bfa;
+  --color-green:  #10b981;
+  --color-amber:  #f59e0b;
+  --color-red:    #ef4444;
+  --color-blue:   #ccff00; /* Volt */
+  --color-purple: #ccff00; /* Volt Green is the new accent */
 
-  --radius-sm:  6px;
-  --radius-md:  10px;
-  --radius-lg:  16px;
-  --radius-xl:  24px;
+  --radius-sm:  2px;
+  --radius-md:  4px;
+  --radius-lg:  8px;
+  --radius-xl:  12px;
 
-  --shadow-glow-green:  0 0 20px rgba(29,158,117,0.25);
-  --shadow-glow-amber:  0 0 20px rgba(239,159,39,0.25);
-  --shadow-glow-red:    0 0 20px rgba(226,75,74,0.25);
-  --shadow-card:        0 4px 24px rgba(0,0,0,0.4);
-  --shadow-panel:       0 8px 40px rgba(0,0,0,0.5);
+  --shadow-glow-green:  4px 4px 0 rgba(16, 185, 129, 0.4);
+  --shadow-glow-amber:  4px 4px 0 rgba(245, 158, 11, 0.4);
+  --shadow-glow-red:    4px 4px 0 rgba(239, 68, 68, 0.4);
+  --shadow-card:        4px 4px 0 rgba(0,0,0,0.8);
+  --shadow-panel:       6px 6px 0 rgba(0,0,0,0.8);
 }
 
 /* ── Reset ── */
@@ -39,12 +39,13 @@
 
 html, body, #root {
   height: 100%;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Outfit', system-ui, sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.2px;
 }
 
 /* ── Scrollbar ── */
@@ -77,36 +78,37 @@ html, body, #root {
 
 .navbar-icon  { font-size: 22px; }
 .navbar-title {
-  font-size: 18px;
-  font-weight: 800;
-  background: linear-gradient(135deg, #60a5fa, #a78bfa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.5px;
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--color-text);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-style: italic;
 }
 .navbar-subtitle {
   font-size: 11px;
-  font-weight: 700;
-  color: var(--color-purple);
-  background: rgba(167,139,250,0.15);
-  border: 1px solid rgba(167,139,250,0.3);
-  border-radius: 4px;
-  padding: 1px 6px;
-  letter-spacing: 1px;
+  font-weight: 800;
+  color: #000;
+  background: var(--color-purple);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transform: skewX(-10deg);
 }
 
 .navbar-center { display: flex; align-items: center; }
 
 .event-pill {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 800;
   letter-spacing: 1.5px;
-  border: 1px solid;
-  border-radius: 999px;
-  padding: 3px 12px;
+  border: 2px solid;
+  border-radius: var(--radius-sm);
+  padding: 4px 14px;
   text-transform: uppercase;
-  transition: color 0.4s, border-color 0.4s;
+  transition: all 0.2s;
+  transform: skewX(-10deg);
 }
 
 .navbar-right { display: flex; align-items: center; gap: 16px; }
@@ -139,12 +141,14 @@ html, body, #root {
 .nav-links { display: flex; gap: 4px; }
 .nav-link {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text-muted);
   text-decoration: none;
   padding: 6px 14px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 .nav-link:hover { color: var(--color-text); background: var(--color-surface-2); }
 .nav-link.active {
@@ -236,12 +240,13 @@ html, body, #root {
 .map-container {
   flex: 1;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
   padding: 16px;
   min-height: 0;
   overflow: hidden;
   position: relative;
+  box-shadow: var(--shadow-panel);
 }
 
 .stadium-map-wrapper {
@@ -250,6 +255,10 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Sporty grid background */
+  background-image: linear-gradient(var(--color-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 /* ── Legend ── */
@@ -278,10 +287,11 @@ html, body, #root {
    ══════════════════════════════════════════════════════════ */
 .nudge-panel {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
   padding: 18px;
   flex-shrink: 0;
+  box-shadow: var(--shadow-panel);
 }
 
 .nudge-panel-header {
@@ -332,13 +342,15 @@ html, body, #root {
 .nudge-list { display: flex; flex-direction: column; gap: 10px; }
 
 .nudge-card {
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   padding: 12px 14px;
   animation: slideIn 0.35s ease both;
+  transform: skewX(-2deg);
+  border: 1px solid var(--color-border-light);
 }
 @keyframes slideIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(10px) skewX(-2deg); }
+  to   { opacity: 1; transform: translateY(0) skewX(-2deg); }
 }
 
 .nudge-header {
@@ -351,16 +363,19 @@ html, body, #root {
 .nudge-zone { font-size: 12px; font-weight: 700; flex: 1; }
 .nudge-badge {
   font-size: 9px;
-  font-weight: 700;
-  color: #fff;
-  border-radius: 4px;
+  font-weight: 900;
+  color: #000;
+  border-radius: 2px;
   padding: 2px 6px;
   letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 .nudge-message {
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--color-text);
   line-height: 1.5;
+  transform: skewX(2deg); /* Counter-skew text */
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -368,14 +383,15 @@ html, body, #root {
    ══════════════════════════════════════════════════════════ */
 .crowd-chat {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
   padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   flex: 1;
   min-height: 0;
+  box-shadow: var(--shadow-panel);
 }
 
 .chat-header {
@@ -405,20 +421,22 @@ html, body, #root {
 }
 .chat-seed-btn {
   background: var(--color-surface-2);
-  border: 1px solid var(--color-border-light);
+  border: 2px solid var(--color-border-light);
   color: var(--color-text);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   padding: 8px 12px;
   text-align: left;
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   font-family: inherit;
+  transform: skewX(-5deg);
 }
 .chat-seed-btn:hover {
   border-color: var(--color-purple);
-  background: rgba(167,139,250,0.08);
-  color: var(--color-text);
+  background: var(--color-purple);
+  color: #000;
 }
 
 .chat-messages {
@@ -442,7 +460,6 @@ html, body, #root {
   font-size: 20px;
   flex-shrink: 0;
 }
-.user-avatar { }
 
 .chat-bubble {
   max-width: 84%;
@@ -508,18 +525,20 @@ html, body, #root {
 .chat-input:disabled { opacity: 0.5; }
 
 .chat-send-btn {
-  background: linear-gradient(135deg, #3b4fd4, #7c3aed);
-  border: none;
-  color: #fff;
-  border-radius: var(--radius-md);
-  width: 40px; height: 40px;
+  background: var(--color-purple);
+  border: 2px solid var(--color-purple);
+  color: #000;
+  border-radius: var(--radius-sm);
+  width: 44px; height: 44px;
   font-size: 18px;
+  font-weight: 800;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: opacity 0.2s, transform 0.1s;
+  transition: transform 0.1s;
   flex-shrink: 0;
+  transform: skewX(-10deg);
 }
-.chat-send-btn:hover:not(:disabled) { opacity: 0.9; transform: scale(1.05); }
+.chat-send-btn:hover:not(:disabled) { transform: scale(1.05) skewX(-10deg); }
 .chat-send-btn:disabled { opacity: 0.35; cursor: default; }
 
 /* ══════════════════════════════════════════════════════════
@@ -588,21 +607,24 @@ html, body, #root {
 
 .event-btn {
   background: var(--color-surface-2);
-  border: 1px solid var(--color-border-light);
+  border: 2px solid var(--color-border-light);
   color: var(--color-text-muted);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   padding: 7px 14px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 800;
   font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   cursor: pointer;
   transition: all 0.2s;
+  transform: skewX(-10deg);
 }
-.event-btn:hover { border-color: var(--color-purple); color: var(--color-text); background: rgba(167,139,250,0.08); }
+.event-btn:hover { border-color: var(--color-purple); color: var(--color-purple); }
 .event-btn.active {
   border-color: var(--color-purple);
-  color: var(--color-purple);
-  background: rgba(167,139,250,0.12);
+  color: #000;
+  background: var(--color-purple);
 }
 .event-btn.refresh-btn { margin-left: auto; color: var(--color-text-muted); }
 
