@@ -10,13 +10,13 @@ RUN pip install --no-cache-dir \
     pydantic==2.10.6
 
 
-# Copy application code
-COPY simulator.py .
-COPY llm_service.py .
-COPY main.py .
+# Copy application code from backend folder
+COPY backend/simulator.py backend/
+COPY backend/llm_service.py backend/
+COPY backend/main.py backend/
 
 # Expose port
 EXPOSE 8000
 
-# Run with uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run with uvicorn pointing to the backend module
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

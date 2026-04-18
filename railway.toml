@@ -1,11 +1,11 @@
 # Railway deployment configuration for CrowdSense AI backend
-
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+dockerfilePath = "backend/Dockerfile"
+watchPatterns = ["backend/**"]
 
 [deploy]
-startCommand = "uvicorn main:app --host 0.0.0.0 --port 8000"
+startCommand = "uvicorn backend.main:app --host 0.0.0.0 --port 8000"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 restartPolicyType = "ON_FAILURE"
