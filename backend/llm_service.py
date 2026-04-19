@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GOOGLE_API_KEY: str = os.environ.get("GOOGLE_API_KEY", "")
-GEMINI_MODEL:   str = "gemini-2.5-flash"
+GEMINI_MODEL:   str = "gemini-1.5-flash"
 GEMINI_URL:     str = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GOOGLE_API_KEY}"
 
 # ---------------------------------------------------------------------------
@@ -33,7 +33,10 @@ async def _call_gemini(system: str, user: str, max_tokens: int = 512) -> str:
     }
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(GEMINI_URL, headers=headers, json=payload)
-        resp.raise_for_status()
+        if resp.status_code != 200:
+            print(f"[llm_service] Gemini Error ({resp.status_code}): {resp.text}")
+            resp.raise_for_status()
+            
         data = resp.json()
         return data["candidates"][0]["content"]["parts"][0]["text"]
 
