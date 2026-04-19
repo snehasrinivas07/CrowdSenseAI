@@ -16,7 +16,7 @@ load_dotenv()
 def get_gemini_config():
     """Dynamically fetch latest config to ensure env vars are fresh."""
     key = os.environ.get("GOOGLE_API_KEY", "")
-    model = "gemini-1.5-flash"
+    model = "gemini-1.5-flash-latest"
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
     return url, key
 
