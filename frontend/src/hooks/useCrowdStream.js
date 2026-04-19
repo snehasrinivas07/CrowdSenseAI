@@ -61,8 +61,10 @@ export function useCrowdStream() {
         // Auto-reconnect after 3 seconds
         reconnectTimer.current = setTimeout(() => {
           if (mountedRef.current) connect();
+        }, 3000);
+      }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [connect]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     mountedRef.current = true;
