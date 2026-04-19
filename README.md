@@ -6,7 +6,8 @@
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
-[![Gemini](https://img.shields.io/badge/Google_Gemini-1.5_Flash-4285F4?style=for-the-badge&logo=google-gemini)](https://ai.google.dev/)
+[![Gemini](https://img.shields.io/badge/Google_Gemini-Pro-4285F4?style=for-the-badge&logo=google-gemini)](https://ai.google.dev/)
+[![Claude](https://img.shields.io/badge/Claude-Sonnet-7C3AED?style=for-the-badge&logo=anthropic)](https://anthropic.com/)
 [![Google Cloud](https://img.shields.io/badge/Google_Cloud-Cloud_Run-4285F4?style=for-the-badge&logo=google-cloud)](https://cloud.google.com/run)
 
 ---
@@ -23,7 +24,7 @@
 
 Modern sports and entertainment venues suffer from "Post-Game Congestion" and "Half-Time Gridlock." **CrowdSense AI** solves this by bridging the gap between raw stadium data and actionable intelligence.
 
-It doesn't just show you a map; it **reasons** about crowd flow using the **Gemini 1.5 Flash** model, pushing proactive "nudges" to attendees and operational "actions" to staff—all in real-time.
+It doesn't just show you a map; it **reasons** about crowd flow using an ensemble of **Gemini Pro** and **Claude Sonnet** models, pushing proactive "nudges" to attendees and operational "actions" to staff—all in real-time.
 
 ---
 
@@ -74,7 +75,7 @@ graph LR
 | :--- | :--- | :--- |
 | **Frontend** | React 18 / Vite / Vanilla CSS | Ultra-fast rendering with premium glassmorphism aesthetics. |
 | **Backend** | Python 3.11 / FastAPI | High-concurrency WebSockets for live data streaming. |
-| **Intelligence**| Gemini 1.5 Flash | The industry-leading model for low-latency reasoning and instructions. |
+| **Intelligence**| Gemini Pro / Claude Sonnet | The industry-leading models for sophisticated reasoning and instructions. |
 | **Infrastructure**| Google Cloud Run | Fully serverless, containerized deployment in the Mumbai region (`asia-south1`). |
 | **Real-time** | WebSockets (WS/WSS) | Persistent bi-directional data flow with auto-reconnection. |
 
