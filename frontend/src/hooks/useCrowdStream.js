@@ -61,8 +61,6 @@ export function useCrowdStream() {
         // Auto-reconnect after 3 seconds
         reconnectTimer.current = setTimeout(() => {
           if (mountedRef.current) connect();
-        }, 3000);
-      }
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -75,6 +73,30 @@ export function useCrowdStream() {
       if (wsRef.current) wsRef.current.close();
     };
   }, [connect]);
+
+  // Vercel/Serverless Fallback: Poll if WebSocket is not connected
+  useEffect(() => {
+    let pollTimer = null;
+    if (!connected && mountedRef.current) {
+      pollTimer = setInterval(async () => {
+        try {
+          const res = await fetch(`${API_URL}/crowd/state`);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (mountedRef.current) {
+            setZones(data.zones || []);
+            setEvent(data.event || "IN_PLAY");
+            setSummary(data.summary || null);
+          }
+        } catch (err) {
+          // Log quiet fallback error
+        }
+      }, 5000); // 5-second polling
+    }
+    return () => {
+      if (pollTimer) clearInterval(pollTimer);
+    };
+  }, [connected]);
 
   /** Trigger a stadium event via REST, then the WS broadcast catches up. */
   const triggerEvent = useCallback(async (eventName) => {
