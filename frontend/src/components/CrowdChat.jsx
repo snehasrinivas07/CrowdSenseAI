@@ -86,7 +86,7 @@ export default function CrowdChat({ onZoneHighlight }) {
         body:    JSON.stringify({ message: msg, history }),
       });
       const data = await res.json();
-      const answer = data.answer || "Sorry, I couldn't get an answer right now.";
+      const answer = data.reply || data.answer || "Sorry, I couldn't get an answer right now.";
 
       const updatedHistory = [...newHistory, { role: "assistant", content: answer }];
       setHistory(updatedHistory);
@@ -163,6 +163,7 @@ export default function CrowdChat({ onZoneHighlight }) {
           className="chat-input"
           type="text"
           placeholder="Ask about any zone…"
+          aria-label="Ask a question about current crowd conditions"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}

@@ -101,7 +101,12 @@ export default function StadiumMap({ zones = [], highlightedZones = [] }) {
         viewBox="0 0 680 480"
         xmlns="http://www.w3.org/2000/svg"
         style={{ width: "100%", height: "100%", display: "block" }}
+        role="img"
+        aria-label="Live stadium crowd density map showing real-time crowd pressure across 14 zones"
       >
+        <title>CrowdSense AI Stadium Heatmap</title>
+        <desc>An interactive real-time heatmap showing crowd density levels across 14 stadium zones including gates, concessions, restrooms and exits. Colors range from green for low density to red for high density.</desc>
+
         {/* ── Stadium outline ── */}
         <rect
           x={8} y={8} width={664} height={464}
@@ -153,7 +158,6 @@ export default function StadiumMap({ zones = [], highlightedZones = [] }) {
               key={layout.id}
               style={{ cursor: "pointer" }}
               onMouseEnter={(e) => {
-                const svgRect = e.currentTarget.ownerSVGElement.getBoundingClientRect();
                 setTooltip({ zoneId: layout.id, x: layout.x, y: layout.y + layout.h + 6 });
               }}
               onMouseLeave={() => setTooltip({ zoneId: null, x: 0, y: 0 })}
@@ -188,6 +192,14 @@ export default function StadiumMap({ zones = [], highlightedZones = [] }) {
                 stroke={color}
                 strokeOpacity={0.6}
                 strokeWidth={1}
+                role="img"
+                tabIndex={0}
+                aria-label={`${zone?.name || layout.id}: ${Math.round(density)}% capacity, ${zone?.wait_minutes || 0} minute wait, crowd is ${zone?.trend || "stable"}`}
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    setTooltip({ zoneId: layout.id, x: layout.x, y: layout.y + layout.h + 6 });
+                  }
+                }}
                 style={{ transition: "fill 0.6s ease, fill-opacity 0.6s ease" }}
               />
 

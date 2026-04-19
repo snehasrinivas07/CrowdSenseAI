@@ -4,6 +4,7 @@
  * Route /admin  → Admin Dashboard
  */
 
+import React from "react";
 import { useState } from "react";
 import { BrowserRouter, Link, Route, Routes, useLocation } from "react-router-dom";
 
@@ -12,6 +13,27 @@ import CrowdChat from "./components/CrowdChat";
 import NudgePanel from "./components/NudgePanel";
 import StadiumMap from "./components/StadiumMap";
 import { useCrowdStream } from "./hooks/useCrowdStream";
+
+// ─── Error Boundary ───────────────────────────────────────────────────────
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: "40px", textAlign: "center", color: "#ef4444" }}>
+          <h2>Something went wrong in the map engine.</h2>
+          <button onClick={() => window.location.reload()} style={{ marginTop: "20px" }}>Reload Application</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // ─── Top Navigation Bar ───────────────────────────────────────────────────
 
@@ -119,10 +141,12 @@ function AppShell() {
       <NavBar connected={connected} event={event} />
 
       <main className="main-content">
-        <Routes>
-          <Route path="/" element={<AttendeeView />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<AttendeeView />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+          </Routes>
+        </ErrorBoundary>
       </main>
     </div>
   );

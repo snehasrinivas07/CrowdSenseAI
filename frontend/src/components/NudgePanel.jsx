@@ -68,7 +68,7 @@ export default function NudgePanel() {
   }, [fetchNudges]);
 
   return (
-    <div className="nudge-panel">
+    <div className="nudge-panel" aria-live="polite" aria-label="Live crowd nudges and recommendations">
       <div className="nudge-panel-header">
         <div className="nudge-title-row">
           <span className="nudge-title-icon">🧠</span>

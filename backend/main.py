@@ -9,12 +9,39 @@ import json
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
+import time
 
 import simulator
 from llm_service import chat_with_context, generate_nudges, get_staff_action
+
+# ---------------------------------------------------------------------------
+# Security & Rate Limiting
+# ---------------------------------------------------------------------------
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none'"
+        return response
+
+# Simple in-memory rate limiter for /chat
+chat_limits: dict[str, float] = {}
+
+def is_rate_limited(ip: str) -> bool:
+    now = time.time()
+    last = chat_limits.get(ip, 0)
+    if now - last < 2.0: # 2 second cooldown
+        return True
+    chat_limits[ip] = now
+    return False
 
 # ---------------------------------------------------------------------------
 # WebSocket connection manager
@@ -73,13 +100,17 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="CrowdSense AI",
     description="Real-time crowd intelligence for large-scale sporting venues.",
-    version="1.0.0",
+    version="1.1.0",
     lifespan=lifespan,
 )
 
+app.add_middleware(SecurityHeadersMiddleware)
+
+# Restricted CORS for production safety
+PROD_FRONTEND = "https://crowdsense-frontend-417095097143.asia-south1.run.app"
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[PROD_FRONTEND, "http://localhost:5173", "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -113,12 +144,12 @@ async def get_crowd_state() -> dict[str, Any]:
 
 
 @app.post("/events/trigger", summary="Trigger a stadium event (PRE_GAME, HALF_TIME, etc.)")
-async def trigger_event(req: EventTriggerRequest) -> dict[str, str]:
+async def trigger_event(req: EventTriggerRequest) -> dict[str, Any]:
     try:
         simulator.set_event(req.event)
-        return {"status": "ok", "event": req.event}
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"success": True, "status": "ok", "event": req.event}
+    except ValueError:
+        return {"success": False, "status": "error"}
 
 
 @app.post("/nudges/generate", summary="Generate LLM-powered attendee nudges")
@@ -129,10 +160,15 @@ async def nudges_generate() -> dict[str, Any]:
 
 
 @app.post("/chat", summary="Crowd-aware natural language Q&A")
-async def chat(req: ChatMessage) -> dict[str, str]:
+async def chat(req: ChatMessage, request: Request) -> dict[str, str]:
+    # Rate limiting
+    client_ip = request.client.host
+    if is_rate_limited(client_ip):
+        return {"reply": "I'm thinking a bit too fast! Please wait a second before your next question."}
+
     state  = simulator.get_crowd_state()
     answer = await chat_with_context(req.message, req.history, state)
-    return {"answer": answer}
+    return {"reply": answer}
 
 
 @app.post("/admin/staff-action", summary="Get LLM staff action for a specific zone")
@@ -155,8 +191,8 @@ async def all_staff_actions() -> dict[str, Any]:
 
 
 @app.get("/health", summary="Health check")
-async def health() -> dict[str, str]:
-    return {"status": "healthy", "event": simulator.get_current_event()}
+async def health() -> dict[str, Any]:
+    return {"status": "ok", "event": simulator.get_current_event(), "zone_count": 14}
 
 
 # ---------------------------------------------------------------------------

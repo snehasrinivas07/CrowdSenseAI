@@ -49,8 +49,19 @@ export default function AdminDashboard() {
   const { zones, event, summary, connected, triggerEvent } = useCrowdStream();
   const [staffActions, setStaffActions] = useState({});
   const [loadingActions, setLoadingActions] = useState(false);
-  const [activeEvent, setActiveEvent] = useState(null);
+  const [copied, setCopied] = useState(false);
   const pollRef = useRef(null);
+
+  const copyIntelligenceReport = useCallback(() => {
+    const report = zones.map(z => 
+      `${z.name}: ${z.density}% (${z.trend}), Wait: ${z.wait_minutes}m. Action: ${staffActions[z.id] || "N/A"}`
+    ).join("\n");
+    const fullReport = `🏟️ CrowdSense AI — Intelligence Report\nPhase: ${event}\nTime: ${new Date().toLocaleString()}\n\n${report}`;
+    
+    navigator.clipboard.writeText(fullReport);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [zones, event, staffActions]);
 
   const fetchStaffActions = useCallback(async () => {
     setLoadingActions(true);
@@ -144,6 +155,13 @@ export default function AdminDashboard() {
           title="Refresh staff actions"
         >
           {loadingActions ? "⟳" : "↻"} Refresh Actions
+        </button>
+        <button
+          className={`event-btn ${copied ? "active" : ""}`}
+          onClick={copyIntelligenceReport}
+          title="Copy current status report to clipboard"
+        >
+          {copied ? "✓ Copied" : "📋 Copy Report"}
         </button>
       </section>
 
