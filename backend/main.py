@@ -200,30 +200,35 @@ async def health() -> dict[str, Any]:
 
 @app.get("/debug/gemini")
 async def debug_gemini():
-    """Diagnostic endpoint to see if the key is loaded and model is reachable."""
-    from llm_service import _call_gemini, get_gemini_config
+    """Diagnostic endpoint to find the working model for this environment."""
+    from llm_service import get_gemini_config
+    import httpx
     
-    url, key = get_gemini_config()
+    url_base, key = get_gemini_config()
     key_masked = f"{key[:4]}...{key[-4:]}" if len(key) > 8 else "NOT_SET"
     
-    try:
-        response = await _call_gemini("hi", "Say 'Gemini Active'", max_tokens=10)
-        return {
-            "key_present": bool(key),
-            "key_preview": key_masked,
-            "can_call_gemini": True,
-            "response": response.strip(),
-            "target": url.split("?")[0]
-        }
-    except Exception as e:
-        return {
-            "key_present": bool(key),
-            "key_preview": key_masked,
-            "can_call_gemini": False,
-            "error_type": type(e).__name__,
-            "error_detail": str(e),
-            "target": url.split("?")[0]
-        }
+    models_to_test = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro", "gemini-1.5-pro"]
+    results = {}
+    
+    for model in models_to_test:
+        test_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(test_url, json={
+                    "contents": [{"parts": [{"text": "hi"}]}]
+                })
+                if resp.status_code == 200:
+                    results[model] = "✅ WORKING"
+                else:
+                    results[model] = f"❌ ERROR ({resp.status_code}): {resp.json().get('error', {}).get('message', 'Unknown')}"
+        except Exception as e:
+            results[model] = f"❌ EXCEPTION: {str(e)}"
+            
+    return {
+        "key_present": bool(key),
+        "key_preview": key_masked,
+        "model_tests": results,
+    }
 
 
 # ---------------------------------------------------------------------------
