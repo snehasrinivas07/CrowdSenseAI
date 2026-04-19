@@ -64,7 +64,7 @@ export function useCrowdStream() {
         }, 3000);
       }
     };
-  }, [connect]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     mountedRef.current = true;

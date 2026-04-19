@@ -84,7 +84,6 @@ export default function AdminDashboard() {
   }, [fetchStaffActions]);
 
   const handleTrigger = async (ev) => {
-    setActiveEvent(ev);
     await triggerEvent(ev);
     // Refresh staff actions after event changes crowd state
     setTimeout(fetchStaffActions, 2000);
