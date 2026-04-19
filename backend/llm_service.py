@@ -13,9 +13,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-GOOGLE_API_KEY: str = os.environ.get("GOOGLE_API_KEY", "")
-GEMINI_MODEL:   str = "gemini-1.5-flash"
-GEMINI_URL:     str = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GOOGLE_API_KEY}"
+def get_gemini_config():
+    """Dynamically fetch latest config to ensure env vars are fresh."""
+    key = os.environ.get("GOOGLE_API_KEY", "")
+    model = "gemini-1.5-flash"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+    return url, key
 
 # ---------------------------------------------------------------------------
 # Internal helper
@@ -23,6 +26,12 @@ GEMINI_URL:     str = f"https://generativelanguage.googleapis.com/v1beta/models/
 
 async def _call_gemini(system: str, user: str, max_tokens: int = 512) -> str:
     """Send a single-turn message to Gemini and return the text response."""
+    url, key = get_gemini_config()
+    
+    if not key:
+        print("[llm_service] ERROR: GOOGLE_API_KEY is missing from environment.")
+        raise ValueError("Missing GOOGLE_API_KEY")
+
     headers = {
         "content-type": "application/json",
     }
@@ -32,7 +41,7 @@ async def _call_gemini(system: str, user: str, max_tokens: int = 512) -> str:
         "generationConfig": {"maxOutputTokens": max_tokens},
     }
     async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.post(GEMINI_URL, headers=headers, json=payload)
+        resp = await client.post(url, headers=headers, json=payload)
         if resp.status_code != 200:
             print(f"[llm_service] Gemini Error ({resp.status_code}): {resp.text}")
             resp.raise_for_status()
@@ -180,6 +189,10 @@ async def chat_with_context(
             "parts": [{"text": message}]
         })
 
+        url, key = get_gemini_config()
+        if not key:
+            raise ValueError("Missing GOOGLE_API_KEY")
+
         headers = {
             "content-type": "application/json",
         }
@@ -189,7 +202,7 @@ async def chat_with_context(
             "generationConfig": {"maxOutputTokens": 350},
         }
         async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(GEMINI_URL, headers=headers, json=payload)
+            resp = await client.post(url, headers=headers, json=payload)
             resp.raise_for_status()
             data = resp.json()
             return data["candidates"][0]["content"]["parts"][0]["text"]
@@ -229,6 +242,7 @@ async def get_staff_action(zone: dict) -> str:
                 "trend":        zone.get("trend"),
             }
         )
+        url, key = get_gemini_config()
         system = STAFF_ACTION_SYSTEM.format(zone_json=zone_json)
         raw = await _call_gemini(system, "Provide the staff action now.", max_tokens=60)
         return raw.strip()

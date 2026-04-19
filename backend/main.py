@@ -192,7 +192,38 @@ async def all_staff_actions() -> dict[str, Any]:
 
 @app.get("/health", summary="Health check")
 async def health() -> dict[str, Any]:
-    return {"status": "ok", "event": simulator.get_current_event(), "zone_count": 14}
+    return {
+        "status": "ok",
+        "backend": "Vercel" if os.environ.get("VERCEL") else "CloudRun",
+        "zone_count": 14
+    }
+
+@app.get("/debug/gemini")
+async def debug_gemini():
+    """Diagnostic endpoint to see if the key is loaded and model is reachable."""
+    from llm_service import _call_gemini, get_gemini_config
+    
+    url, key = get_gemini_config()
+    key_masked = f"{key[:4]}...{key[-4:]}" if len(key) > 8 else "NOT_SET"
+    
+    try:
+        response = await _call_gemini("hi", "Say 'Gemini Active'", max_tokens=10)
+        return {
+            "key_present": bool(key),
+            "key_preview": key_masked,
+            "can_call_gemini": True,
+            "response": response.strip(),
+            "target": url.split("?")[0]
+        }
+    except Exception as e:
+        return {
+            "key_present": bool(key),
+            "key_preview": key_masked,
+            "can_call_gemini": False,
+            "error_type": type(e).__name__,
+            "error_detail": str(e),
+            "target": url.split("?")[0]
+        }
 
 
 # ---------------------------------------------------------------------------
