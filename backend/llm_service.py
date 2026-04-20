@@ -1,24 +1,35 @@
+# Google AI Services Integration
+# Model: gemini-2.0-flash via Google AI Studio
+# Endpoint: generativelanguage.googleapis.com/v1beta
+# Usage: Real-time crowd state reasoning and nudge generation
+# Deployment: Google Cloud Run (asia-south1)
+
 """
 CrowdSense AI — LLM Service
-Wraps Anthropic Claude API for nudge generation, chat, and per-zone staff actions.
+Wraps Google Gemini API for nudge generation, chat, and per-zone staff actions.
 All calls have try/except with hard-coded fallback responses.
 """
 
 import json
-import os
+import logging
 from typing import Any
 
 import httpx
 from dotenv import load_dotenv
 
+import config
+
 load_dotenv()
 
-def get_gemini_config():
-    """Dynamically fetch latest config to ensure env vars are fresh."""
-    key = os.environ.get("GOOGLE_API_KEY", "")
-    model = "gemini-1.5-flash-latest"
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
-    return url, key
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Module-level persistent async client
+_client = httpx.AsyncClient(timeout=15)
+
+# Startup validation
+if not config.GEMINI_API_KEY:
+    logger.warning("[llm_service] WARNING: GEMINI_API_KEY is not set in environment")
 
 # ---------------------------------------------------------------------------
 # Internal helper
@@ -26,28 +37,26 @@ def get_gemini_config():
 
 async def _call_gemini(system: str, user: str, max_tokens: int = 512) -> str:
     """Send a single-turn message to Gemini and return the text response."""
-    url, key = get_gemini_config()
-    
-    if not key:
-        print("[llm_service] ERROR: GOOGLE_API_KEY is missing from environment.")
-        raise ValueError("Missing GOOGLE_API_KEY")
+    if not config.GEMINI_API_KEY:
+        logger.error("[llm_service] ERROR: GEMINI_API_KEY is missing from environment.")
+        raise ValueError("Missing GEMINI_API_KEY")
 
     headers = {
         "content-type": "application/json",
     }
+    url = f"{config.GEMINI_ENDPOINT}?key={config.GEMINI_API_KEY}"
     payload = {
         "systemInstruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": [{"text": user}]}],
         "generationConfig": {"maxOutputTokens": max_tokens},
     }
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.post(url, headers=headers, json=payload)
-        if resp.status_code != 200:
-            print(f"[llm_service] Gemini Error ({resp.status_code}): {resp.text}")
-            resp.raise_for_status()
-            
-        data = resp.json()
-        return data["candidates"][0]["content"]["parts"][0]["text"]
+    resp = await _client.post(url, headers=headers, json=payload)
+    if resp.status_code != 200:
+        logger.error(f"[llm_service] Gemini Error ({resp.status_code}): {resp.text}")
+        resp.raise_for_status()
+        
+    data = resp.json()
+    return data["candidates"][0]["content"]["parts"][0]["text"]
 
 
 # ---------------------------------------------------------------------------
@@ -81,9 +90,9 @@ _NUDGE_FALLBACK = [
 ]
 
 
-async def generate_nudges(crowd_state: dict) -> list[dict]:
-    """
-    Generate 2–3 attendee nudges grounded in live crowd data.
+async def generate_nudges(crowd_state: dict[str, Any]) -> list[dict[str, Any]]:
+    """Generate 2-3 attendee nudges grounded in live crowd data.
+    
     Returns a list of {zone, message, urgency} dicts.
     Falls back to a static response on any error.
     """
@@ -121,7 +130,7 @@ async def generate_nudges(crowd_state: dict) -> list[dict]:
         return valid if valid else _NUDGE_FALLBACK
 
     except Exception as exc:  # noqa: BLE001
-        print(f"[llm_service] generate_nudges error: {exc}")
+        logger.error(f"[llm_service] generate_nudges error: {exc}")
         return _NUDGE_FALLBACK
 
 
@@ -146,14 +155,18 @@ _CHAT_FALLBACK = (
 
 async def chat_with_context(
     message: str,
-    history: list[dict],
-    crowd_state: dict,
+    history: list[dict[str, str]],
+    crowd_state: dict[str, Any],
 ) -> str:
-    """
-    Answer an attendee question grounded in live crowd data.
-    history is a list of {role: 'user'|'assistant', content: str}.
-    Returns a plain-text answer string.
-    Falls back to a static response on any error.
+    """Answer an attendee question grounded in live crowd data.
+    
+    Args:
+        message: The attendee's question
+        history: List of {role: 'user'|'assistant', content: str}
+        crowd_state: Current crowd state from simulator
+        
+    Returns:
+        Plain-text answer string. Falls back to static response on error.
     """
     try:
         crowd_json = json.dumps(
@@ -175,7 +188,7 @@ async def chat_with_context(
         system = CHAT_SYSTEM_TEMPLATE.format(crowd_json=crowd_json)
 
         # Build messages list: history + new user message
-        messages: list[dict] = []
+        messages: list[dict[str, Any]] = []
         for turn in history[-10:]:  # keep last 10 turns
             raw_role = turn.get("role", "user")
             # map assistant -> model for Gemini
@@ -189,26 +202,25 @@ async def chat_with_context(
             "parts": [{"text": message}]
         })
 
-        url, key = get_gemini_config()
-        if not key:
-            raise ValueError("Missing GOOGLE_API_KEY")
+        if not config.GEMINI_API_KEY:
+            raise ValueError("Missing GEMINI_API_KEY")
 
         headers = {
             "content-type": "application/json",
         }
+        url = f"{config.GEMINI_ENDPOINT}?key={config.GEMINI_API_KEY}"
         payload: dict[str, Any] = {
             "systemInstruction": {"parts": [{"text": system}]},
             "contents": messages,
             "generationConfig": {"maxOutputTokens": 350},
         }
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(url, headers=headers, json=payload)
-            resp.raise_for_status()
-            data = resp.json()
-            return data["candidates"][0]["content"]["parts"][0]["text"]
+        resp = await _client.post(url, headers=headers, json=payload)
+        resp.raise_for_status()
+        data = resp.json()
+        return data["candidates"][0]["content"]["parts"][0]["text"]
 
     except Exception as exc:  # noqa: BLE001
-        print(f"[llm_service] chat_with_context error: {exc}")
+        logger.error(f"[llm_service] chat_with_context error: {exc}")
         return _CHAT_FALLBACK
 
 
@@ -227,10 +239,14 @@ STAFF_ACTION_SYSTEM = (
 _STAFF_FALLBACK = "Monitor zone and report any queue buildup to supervisor."
 
 
-async def get_staff_action(zone: dict) -> str:
-    """
-    Generate a single staff action recommendation for one zone.
-    Falls back to a static response on any error.
+async def get_staff_action(zone: dict[str, Any]) -> str:
+    """Generate a single staff action recommendation for one zone.
+    
+    Args:
+        zone: Zone data dict from crowd state
+        
+    Returns:
+        Staff action string. Falls back to static response on error.
     """
     try:
         zone_json = json.dumps(
@@ -242,10 +258,9 @@ async def get_staff_action(zone: dict) -> str:
                 "trend":        zone.get("trend"),
             }
         )
-        url, key = get_gemini_config()
         system = STAFF_ACTION_SYSTEM.format(zone_json=zone_json)
         raw = await _call_gemini(system, "Provide the staff action now.", max_tokens=60)
         return raw.strip()
     except Exception as exc:  # noqa: BLE001
-        print(f"[llm_service] get_staff_action error: {exc}")
+        logger.error(f"[llm_service] get_staff_action error: {exc}")
         return _STAFF_FALLBACK

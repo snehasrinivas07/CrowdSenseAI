@@ -92,7 +92,7 @@ export default function AdminDashboard() {
   const eventInfo = EVENT_LABELS[event] || { label: event, emoji: "📡" };
 
   return (
-    <div className="admin-dashboard">
+    <div className="admin-dashboard" role="main">
       {/* ── Top bar ── */}
       <header className="admin-header">
         <div className="admin-header-left">
@@ -137,11 +137,18 @@ export default function AdminDashboard() {
         <span className="admin-events-label">Simulate Event:</span>
         {EVENT_BUTTONS.map((ev) => {
           const info = EVENT_LABELS[ev];
+          const ariaLabels = {
+            "PRE_GAME": "Simulate pre-game crowd conditions",
+            "IN_PLAY": "Simulate in-play crowd state",
+            "HALF_TIME": "Simulate half-time crowd surge",
+            "FULL_TIME": "Simulate full-time exit rush",
+          };
           return (
             <button
               key={ev}
               className={`event-btn ${event === ev ? "active" : ""}`}
               onClick={() => handleTrigger(ev)}
+              aria-label={ariaLabels[ev]}
             >
               {info.emoji} {info.label}
             </button>
@@ -169,13 +176,13 @@ export default function AdminDashboard() {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Zone</th>
-              <th>Type</th>
-              <th>Density</th>
-              <th>Bar</th>
-              <th>Trend</th>
-              <th>Wait</th>
-              <th>Staff Action</th>
+              <th scope="col">Zone</th>
+              <th scope="col">Type</th>
+              <th scope="col">Density</th>
+              <th scope="col">Bar</th>
+              <th scope="col">Trend</th>
+              <th scope="col">Wait</th>
+              <th scope="col">Staff Action</th>
             </tr>
           </thead>
           <tbody>

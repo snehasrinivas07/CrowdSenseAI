@@ -3,16 +3,20 @@ CrowdSense AI — Stadium Crowd Density Simulator
 14 zones with sinusoidal density curves, event profiles, and noise modelling.
 """
 
+import logging
 import math
 import random
 import time
-from typing import Optional
+from typing import Any, Optional
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Zone definitions
 # ---------------------------------------------------------------------------
 
-ZONES: list[dict] = [
+ZONES: list[dict[str, str]] = [
     {"id": "gate_a",  "name": "Gate A",         "type": "gate"},
     {"id": "gate_b",  "name": "Gate B",         "type": "gate"},
     {"id": "gate_c",  "name": "Gate C",         "type": "gate"},
@@ -28,6 +32,11 @@ ZONES: list[dict] = [
     {"id": "exit_1",  "name": "Exit 1",          "type": "exit"},
     {"id": "exit_2",  "name": "Exit 2",          "type": "exit"},
 ]
+
+# Startup log: print all zone names
+logger.info("Initializing CrowdSense AI Simulator with 14 zones:")
+for z in ZONES:
+    logger.info(f"  - {z['name']}")
 
 # ---------------------------------------------------------------------------
 # Event profiles: maps event type → zone-type → density target (0.0–1.0)
@@ -77,8 +86,9 @@ _event_start_time: float = time.time()   # when the current event started
 
 
 def set_event(event: str) -> None:
-    """Switch the active event profile."""
+    """Set the active event profile with input sanitization."""
     global _current_event, _event_start_time
+    event = event.strip().upper()
     if event not in EVENT_PROFILES:
         raise ValueError(f"Unknown event: {event}. Valid: {list(EVENT_PROFILES)}")
     _current_event = event
@@ -86,6 +96,7 @@ def set_event(event: str) -> None:
 
 
 def get_current_event() -> str:
+    """Get the currently active event."""
     return _current_event
 
 
@@ -98,13 +109,13 @@ def _zone_hash(zone_id: str) -> int:
     return sum(ord(c) * (i + 1) for i, c in enumerate(zone_id))
 
 
-def _compute_density(zone: dict, t: float) -> dict:
+def _compute_density(zone: dict[str, str], t: float) -> dict[str, Any]:
     """
     Compute the density state for a single zone at time t (seconds).
 
     density = target * 100 + sinusoidal_noise + random_noise
     noise    = sin(t * 0.3 + hash(zone_id) % 10) * 8 + random(-3, 3)
-    wait_minutes = round(density / 100 * 18)   max 18 min
+    wait_minutes = round(density / 100 * 18) max 18 min
     trend: rising if noise > 3, falling if noise < -3, else stable
     predicted_spike_in_minutes: only concession/restroom during IN_PLAY
     """
@@ -128,7 +139,7 @@ def _compute_density(zone: dict, t: float) -> dict:
     else:
         trend = "stable"
 
-    result: dict = {
+    result: dict[str, Any] = {
         "id":       zone["id"],
         "name":     zone["name"],
         "type":     zone["type"],
@@ -149,7 +160,15 @@ def _compute_density(zone: dict, t: float) -> dict:
 # Public API
 # ---------------------------------------------------------------------------
 
-def get_crowd_state() -> dict:
+def get_zone_by_id(zone_id: str) -> dict[str, Any]:
+    """Retrieve zone metadata by zone ID."""
+    for zone in ZONES:
+        if zone["id"] == zone_id:
+            return zone
+    raise ValueError(f"Zone '{zone_id}' not found")
+
+
+def get_crowd_state() -> dict[str, Any]:
     """Return the full crowd state snapshot for all 14 zones."""
     t = time.time()
     zones_state = [_compute_density(zone, t) for zone in ZONES]

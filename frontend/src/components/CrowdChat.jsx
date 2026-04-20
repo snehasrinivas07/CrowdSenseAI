@@ -141,7 +141,7 @@ export default function CrowdChat({ onZoneHighlight }) {
       )}
 
       {/* Message history */}
-      <div className="chat-messages">
+      <div className="chat-messages" role="log" aria-live="polite" aria-label="Chat responses">
         {history.map((msg, i) => (
           <ChatBubble key={i} msg={msg} />
         ))}

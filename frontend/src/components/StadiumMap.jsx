@@ -102,10 +102,10 @@ export default function StadiumMap({ zones = [], highlightedZones = [] }) {
         xmlns="http://www.w3.org/2000/svg"
         style={{ width: "100%", height: "100%", display: "block" }}
         role="img"
-        aria-label="Live stadium crowd density map showing real-time crowd pressure across 14 zones"
+        aria-label="Live stadium crowd density map showing real-time pressure across 14 zones"
       >
         <title>CrowdSense AI Stadium Heatmap</title>
-        <desc>An interactive real-time heatmap showing crowd density levels across 14 stadium zones including gates, concessions, restrooms and exits. Colors range from green for low density to red for high density.</desc>
+        <desc>Interactive real-time heatmap showing crowd density across 14 zones. Green is low density, amber is medium, red is high density.</desc>
 
         {/* ── Stadium outline ── */}
         <rect
@@ -194,7 +194,7 @@ export default function StadiumMap({ zones = [], highlightedZones = [] }) {
                 strokeWidth={1}
                 role="img"
                 tabIndex={0}
-                aria-label={`${zone?.name || layout.id}: ${Math.round(density)}% capacity, ${zone?.wait_minutes || 0} minute wait, crowd is ${zone?.trend || "stable"}`}
+                aria-label={`${zone?.name || layout.id}: ${Math.round(density)}% capacity, ${zone?.wait_minutes || 0} minute wait, trend is ${zone?.trend || "stable"}`}
                 onKeyPress={(e) => {
                   if (e.key === "Enter") {
                     setTooltip({ zoneId: layout.id, x: layout.x, y: layout.y + layout.h + 6 });
@@ -247,6 +247,9 @@ export default function StadiumMap({ zones = [], highlightedZones = [] }) {
           />
         )}
       </svg>
+      <div style={{position:'absolute', left:'-9999px'}}>
+        Legend: Green under 40 percent is low density. Amber 40 to 70 percent is medium density. Red above 70 percent is high density.
+      </div>
     </div>
   );
 }
